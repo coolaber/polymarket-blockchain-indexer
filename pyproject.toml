@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "polymarket-blockchain-indexer"
+version = "1.0.0"
+description = "A resumable Polygon indexer for Polymarket CTF OrderFilled events"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Polymarket Blockchain Indexer contributors" }]
+keywords = ["polymarket", "polygon", "blockchain", "indexer", "sqlite"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Database",
+]
+dependencies = []
+
+[project.scripts]
+polymarket-blockchain-indexer = "polymarket_blockchain_indexer.cli:main"
+
+[project.urls]
+Polymarket-contracts = "https://docs.polymarket.com/resources/contracts"
+
+[tool.setuptools.packages.find]
+where = ["src"]
