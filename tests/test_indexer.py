@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import io
 import json
+import ssl
 import sqlite3
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 from polymarket_blockchain_indexer.cli import main
 from polymarket_blockchain_indexer.constants import CHAIN_ID, CONTRACTS, ORDER_FILLED_TOPIC
@@ -121,6 +122,19 @@ class IndexerTests(unittest.TestCase):
 
 
 class RpcTests(unittest.TestCase):
+    def test_tls_certificate_failure_is_reported_without_retry(self) -> None:
+        attempts = 0
+
+        def open_url(_request: object, *, timeout: float) -> io.BytesIO:
+            nonlocal attempts
+            attempts += 1
+            raise URLError(ssl.SSLCertVerificationError("hostname mismatch"))
+
+        rpc = PolygonRpc("https://example.test", open_url=open_url, retries=4)
+        with self.assertRaisesRegex(RpcError, "TLS certificate verification failed"):
+            rpc.chain_id()
+        self.assertEqual(attempts, 1)
+
     def test_json_rpc_request_and_result(self) -> None:
         requests: list[dict] = []
 

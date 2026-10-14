@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import ssl
 import time
 from collections.abc import Callable
 from typing import Any
@@ -70,7 +71,13 @@ class PolygonRpc:
                 if error.code != 429 and not 500 <= error.code <= 599:
                     raise RpcError(f"RPC HTTP {error.code}") from error
                 failure = error
-            except (URLError, TimeoutError, OSError) as error:
+            except URLError as error:
+                if isinstance(error.reason, ssl.SSLCertVerificationError):
+                    raise RpcError(
+                        "RPC TLS certificate verification failed; check the endpoint certificate and hostname"
+                    ) from error
+                failure = error
+            except (TimeoutError, OSError) as error:
                 failure = error
             except (ValueError, UnicodeError) as error:
                 raise RpcError("RPC returned invalid JSON") from error
