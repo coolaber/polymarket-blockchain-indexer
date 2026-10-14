@@ -20,12 +20,12 @@ To run from a clone without installation, set `PYTHONPATH=src` and use `python -
 
 ## Index a bounded live range
 
-Use a Polygon JSON-RPC endpoint that supports historical `eth_getLogs` for the blocks you choose. Set its URL in the environment; the CLI never writes it to the database or prints it.
+Use a Polygon JSON-RPC endpoint that supports historical `eth_getLogs` for the blocks you choose. Set its URL in the environment; the CLI never writes it to the database or prints it. [Polygon lists public and paid RPC providers](https://docs.polygon.technology/pos/reference/rpc-endpoints). The public endpoint below worked for the one-block check on 2026-10-14, but public providers may apply rate or history limits.
 
 ```bash
-export POLYGON_RPC_URL="https://YOUR_POLYGON_RPC_ENDPOINT"
+export POLYGON_RPC_URL="https://polygon.drpc.org"
 polymarket-blockchain-indexer index \
-  --from-block 90511062 --to-block 90512000 \
+  --from-block 94481672 --to-block 94481672 \
   --db data/ctf_fills.sqlite
 polymarket-blockchain-indexer status --db data/ctf_fills.sqlite
 ```
@@ -33,12 +33,14 @@ polymarket-blockchain-indexer status --db data/ctf_fills.sqlite
 PowerShell:
 
 ```powershell
-$env:POLYGON_RPC_URL = "https://YOUR_POLYGON_RPC_ENDPOINT"
-polymarket-blockchain-indexer index --from-block 90511062 --to-block 90512000 --db data/ctf_fills.sqlite
+$env:POLYGON_RPC_URL = "https://polygon.drpc.org"
+polymarket-blockchain-indexer index --from-block 94481672 --to-block 94481672 --db data/ctf_fills.sqlite
 polymarket-blockchain-indexer status --db data/ctf_fills.sqlite
 ```
 
-The example block range is historical and bounded; it does not guarantee that fills occurred in those blocks or that your provider retains those logs. The default `--contract both` scans the two documented CTF exchanges separately. You can select `--contract ctf` or `--contract neg-risk-ctf`. The first `--from-block` becomes that contract's saved starting block in the database. Reuse the same value when continuing that database, and raise `--to-block` to extend the scan.
+On 2026-10-14, this one-block example returned 17 CTF fills and 12 Neg Risk CTF fills. Other providers may no longer retain that block or may impose different limits. The `.env.example` file is a template; the CLI does not load `.env` automatically. Set `POLYGON_RPC_URL` in the shell before running `index`.
+
+The default `--contract both` scans the two documented CTF exchanges separately. You can select `--contract ctf` or `--contract neg-risk-ctf`. The first `--from-block` becomes that contract's saved starting block in the database. Reuse the same value when continuing that database, and raise `--to-block` to extend the scan.
 
 The requested last block must be at least 64 blocks behind the provider's reported head by default. Set `--confirmations` explicitly if you need a different delay. `--chunk-size` starts at 1,000 blocks; if a provider rejects a range as too large, the indexer halves it and retries. HTTP 429, HTTP 5xx, and transport failures get bounded retries. A failed range leaves its checkpoint unchanged.
 
@@ -60,9 +62,9 @@ Generated databases and local environment files are excluded by `.gitignore`.
 
 ## Scope and limits
 
-The supported addresses come from [Polymarket's Polygon contract list](https://docs.polymarket.com/resources/contracts), which also lists separate **Protocol V2** contracts. This project indexes only CTF Exchange V2 `OrderFilled` logs. It does not claim to be a complete Polymarket trade history. Its topic and fixed ABI layout were checked against the local CTF Exchange V2 ABI used by the source research project.
+The supported addresses come from [Polymarket's Polygon contract list](https://docs.polymarket.com/resources/contracts), which also lists separate **Protocol V2** contracts. This project indexes only CTF Exchange V2 `OrderFilled` logs. It does not claim to be a complete Polymarket trade history. Its topic and fixed ABI layout were checked against the local CTF Exchange V2 ABI used by the source research project, then decoded successfully against real Polygon logs in the one-block check above.
 
-The confirmation delay reduces exposure to ordinary chain reorganizations. The indexer does not automatically detect or repair a reorganization deeper than that delay. For a new scan or a different starting block, use a new database file. Provider history limits and rate limits vary. The demo and CI are offline, so a live provider integration must be checked separately.
+The confirmation delay reduces exposure to ordinary chain reorganizations. The indexer does not automatically detect or repair a reorganization deeper than that delay. For a new scan or a different starting block, use a new database file. Provider history limits and rate limits vary. The demo and CI are offline; the one-block live check above does not guarantee that every provider or a long scan will work.
 
 ## Development
 
